@@ -49,7 +49,7 @@ contract QuadraticVoting {
       item.title = title;
       item.imageHash = imageHash;
       item.description = description;
-      emit ItemCrated(itemID);
+      emit ItemCrated(itemId);
    }
 /*
    modifier onlyItemOwner(Item storage item) {
@@ -65,7 +65,46 @@ contract QuadraticVoting {
       Item storage item = items[itemId];
       require(msg.sender != item.owner, "Owner cannot vote.");
 
-      uint currWeight = item.positiveVotes[msg.sender]
+      uint currWeight = item.positiveVotes[msg.sender];
+      if (currWeight == weight) {
+         return;
+      }
+
+      uint cost = calcCost(currWeight, weight);
+      require(msg.value >= cost, "Must pay enough to vote");
+
+      item.positiveVotes[msg.sender] = weight;
+      item.totalPositiveWeight += weight - currWeight;
+
+      item.totalNegativeWeight -= item.negativeVotes[msg.sender];
+      item.negativeVotes[msg.sender] = 0;
+
+      item.amount += msg.value;
+   
+      emit Voted(itemId, weight, true);
+   }
+
+   function negativeVote(uint itemId, uint weight) public payable {
+      Item storage item = items[itemId];
+      require(msg.sender != item.owner);
+
+      uint currWeight = item.negativeVotes[msg.sender];
+
+      uint cost = calcCost(currWeight, weight);
+      require(msg.value >= cost, "Must pay enough to vote");
+
+      item.negativeVotes[msg.sender] = weight;
+      item.totalNegativeWeight += weight - currWeight;
+
+      item.totalPositiveWeight -= item.positiveVotes[msg.sender];
+      item.positiveVotes[msg.sender] = 0;
+
+      uint reward = msg.value / (itemCount - 1);
+      for (uint i = 0; i < itemCount; i++) {
+         if(i != itemId) items[i].amount += reward;
+      }
+
+      emit Voted(itemId, weight, false);
    }
 }
 
