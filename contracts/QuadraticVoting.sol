@@ -51,5 +51,21 @@ contract QuadraticVoting {
       item.description = description;
       emit ItemCrated(itemID);
    }
+/*
+   modifier onlyItemOwner(Item storage item) {
+      require(msg.sender == item.owner);
+      _;
+   }
+   modifier notItemOwner(Item storage item) {
+      require(msg.sender != item.owner);
+      _;
+   }
+  */
+   function positiveVote(uint itemId, uint weight) public payable {
+      Item storage item = items[itemId];
+      require(msg.sender != item.owner, "Owner cannot vote.");
+
+      uint currWeight = item.positiveVotes[msg.sender]
+   }
 }
 
